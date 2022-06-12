@@ -1,0 +1,35 @@
+{
+  "name": "masjid_admin_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farruholimov/masjid_admin_bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/farruholimov/masjid_admin_bot/issues"
+  },
+  "homepage": "https://github.com/farruholimov/masjid_admin_bot#readme",
+  "dependencies": {
+    "@grammyjs/files": "^1.0.4",
+    "@grammyjs/menu": "^1.1.1",
+    "@grammyjs/router": "^1.1.1",
+    "bcrypt": "^5.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "grammy": "^1.8.3",
+    "jsonwebtoken": "^8.5.1",
+    "node-fetch": "^2.6.7",
+    "pg": "^8.7.3",
+    "query-string": "^7.1.1",
+    "request": "^2.88.2"
+  }
+}
