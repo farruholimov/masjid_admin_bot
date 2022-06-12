@@ -1,0 +1,27 @@
+- Botdan ro’yxatdan o’tish
+    - Ism va familiya
+    - Telefon raqam
+    - Kategoriya (Oddiy user bolsa soraladi)
+- Masjid
+    - Mavjud elonlar (WebView)
+        - 3 Yakunlangan (O’zgartirish)
+        - 2 Active
+        - 1 Tekshirilmoqda
+    - Profil
+        - Masjida qo’shimcha nastroykalar
+    - Elon berish (WebView orqali)
+        - Nomi
+        - Miqdori
+        - Turi
+        - Holati
+        - Kategoriyasi
+        - Elon berilgan vaqti
+        - Qo’shimcha malumotlar
+- User
+    - Masjidalar ro’yxati (Nomi orqali qidirish bo’ladi) (Kirganda aynan shu masjid extiyojlari)
+    - Masjidlar extiyojlari ro’yxati
+    - Ro’yxatdan o’tgan userning malumotlari
+- Masjid admin
+    - Masjidlar ro’yxati > Masjid qo’shish va uni taxrirlash
+    - Elonlar va ularni moderatsiya qilish va taxrirlash
+    - Ro’yxatdan o’tgan foydalanuvchilar
