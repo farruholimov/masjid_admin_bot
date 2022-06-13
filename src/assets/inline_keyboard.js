@@ -31,12 +31,7 @@ const InlineKeyboards = {
     },
 
     menu: new InlineKeyboard()
-        .text("Masjidlar", `${baseUrl}/static/mosques.html`)
-        .row()
-        .text("Extiyojlar", "all_needs")
-        .text("Sozlamalar", "settings"),
-    admin_menu: new InlineKeyboard()
-        .text("Masjidlar", "all_mosques")
+        .webApp("Masjidlar", `https://mosque-bot.vercel.app/`)
         .row()
         .text("E'lonlar", "all_ads")
         .text("Sozlamalar", "settings"),
@@ -52,13 +47,12 @@ const InlineKeyboards = {
         .text("Ismni o'zgartirish", `change_user_info?step=name`)
         .text("Raqamni o'zgartirish", `change_user_info?step=phone`)
         .row()
-        .text("Tanlangan kategoriyalar", `my_categories`)
-        .row()
         .text("Orqaga", `back?step=${step}`),
-    order_sections_menu: (step) =>
+    ad_sections_menu: (step) =>
         new InlineKeyboard()
-        .text("Barchasi", `all_orders`)
-        .text("Hozirgi", `current_order`)
+        .webApp("Barcha e'lonlar", `https://mosque-bot.vercel.app/announcements`)
+        .webApp("Mening e'lonlarim", `https://mosque-bot.vercel.app/announcements`)
+        .webApp("E'lon berish", "https://mosque-bot.vercel.app/add-announcement")
         .row()
         .text("Orqaga", `back?step=${step}`),
 

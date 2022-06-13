@@ -105,33 +105,17 @@ class Controllers {
 
     // Category
 
-    static async selectCategory(ctx, action) {
-        let text = messages.selectCategoriesMsg
-        const user = await Controllers.getUser(ctx)
+    static async selectMosque(ctx, action) {
+        
+        const response = await fetchUrl(`/mosques/tg`)
 
-        if (action == "remove_category") {
-            let uctgs = await fetchUrl(`/categories/user/${user.id}`)
-            uctgs = uctgs.data ? uctgs.data.user_categories : []
+        let mosques = response?.data?.mosques
 
-            text = "Keraksiz kategoriyani tanlash orqali uni o'chirishingiz mumkin."
-            await editMessage(
-                ctx,
-                ctx.callbackQuery.message.message_id,
-                "text",
-                text,
-                {
-                    inline_keyboard: InlineKeyboards.select_categories(uctgs, action)
-                }
-            )
-            return
-        }
-
-        let ctgs = await filterCategories(ctx)
-
-        await ctx.reply(text, {
+        await ctx.reply("Qaysi masjid nomidan ro'yxatdan o'tmoqchisiz?", {
             parse_mode: "HTML",
             reply_markup: {
-                inline_keyboard: InlineKeyboards.select_categories(ctgs, action)
+                resize_keyboard: true,
+                keyboard: Keyboards.select_mosque(mosques)
             },
         })
 
@@ -140,34 +124,26 @@ class Controllers {
     static async setCategory(ctx, action) {
 
         try {
-            const {
-                query
-            } = require('query-string').parseUrl(ctx.callbackQuery.data)
-
             const user = await Controllers.getUser(ctx)
+            const mosque_res = await fetchUrl(`/mosques/${ctx.msg.text}?byname=true`)
+
+            if ((mosque_res.message && mosque_res.message == "Not found") || !mosque_res.data || !mosque_res.data.ok) {
+                await ctx.reply("Bu nomdagi masjid topilmadi", {
+                    parse_mode: "HTML"
+                })
+                return false
+            }
+            const mosque = mosque_res.data.mosque
+            let exist = await fetchUrl(`/users/mosque-admin/${mosque.id}?bymosque=true`)
+
+            if (exist.ok && exist.data.user["mosque_admin.verified"]) {
+                await ctx.reply("Bu masjidga allaqachon admin ro'yxatdan o'tgan!", {
+                    parse_mode: "HTML"
+                })
+                return false
+            }
             
-            if(action == "select_category"){
-                await fetchUrl(`/categories/user/${ctx.session.user.id}`, "POST", {category_id: query.category_id})
-
-                let noctgs =  await filterCategories(ctx)
-
-                await editMessage(ctx, ctx.callbackQuery.message.message_id, "text", messages.selectCategoriesMsg, {
-                    inline_keyboard: InlineKeyboards.select_categories(noctgs, action)
-                })
-            }
-
-            else if(action == "remove_category"){
-                let text = "Keraksiz kategoriyani tanlash orqali uni o'chirishingiz mumkin."
-
-                await fetchUrl(`/categories/user/${user.id}/category/${query.category_id}`, "DELETE")
-
-                let noctgs = await fetchUrl(`/categories/user/${user.id}`)
-                noctgs = noctgs.data ? noctgs.data.user_categories : []
-
-                await editMessage(ctx, ctx.callbackQuery.message.message_id, "text", text, {
-                    inline_keyboard: InlineKeyboards.select_categories(noctgs, action)
-                })
-            }
+            await fetchUrl(`/users/mosque-admin`, "POST", {mosque_id: mosque.id, user_id: user.id})
 
             await ctx.answerCallbackQuery()
         } catch (error) {
@@ -245,11 +221,12 @@ class Controllers {
 
     static async openSettingsMenu(ctx) {
 
-        let user = await Controllers.getUser(ctx)
+        // let user = await Controllers.getUser(ctx)
 
         await ctx.editMessageText(
-            `Profil:\n\n<i>Ismingiz:</i>  <b>${user.full_name}</b>
-            \n<i>Telefon raqamingiz:</i>  <b>${user.phone_number}</b>`, {
+            `Profil:\n\n<i>Ismingiz:</i>  <b>Farruh Olimov</b>
+            \n<i>Telefon raqamingiz:</i>  <b>+998991123366</b>
+            \n<i>Login:</i>  <b>masjid1admin</b>`, {
                 parse_mode: "HTML",
                 message_id: ctx.callbackQuery.message.message_id,
                 reply_markup: InlineKeyboards.user_info_menu("menu")

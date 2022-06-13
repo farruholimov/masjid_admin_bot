@@ -6,7 +6,7 @@ const {
     HttpError
 } = require("grammy");
 const configs = require("./src/config");
-const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, selectCategory, setCategory, openSettingsMenu, backToMenu, getUser } = require("./src/controllers/controllers");
+const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, selectMosque, setCategory, openSettingsMenu, backToMenu, getUser, s, selectMosqueendAlert, sendAlert } = require("./src/controllers/controllers");
 const { Router } = require("@grammyjs/router");
 const messages = require("./src/assets/messages");
 const InlineKeyboards = require("./src/assets/inline_keyboard");
@@ -34,17 +34,64 @@ bot.use(session({
 // }
 // ]);
 
+bot.on("message", async ctx => {
+    await sendMenu(ctx)
+})
+
+bot.on("callback_query:data", async ctx => {
+    const {
+        url: command,
+        query
+    } = require('query-string').parseUrl(ctx.callbackQuery.data)
+
+    switch (command) {
+        case "all_ads":
+            await ctx.editMessageText("Kerakli bo'limni tanlang:", {
+                message_id: ctx.callbackQuery.message.message_id,
+                parse_mode: "HTML",
+                reply_markup: {
+                    inline_keyboard: InlineKeyboards.ad_sections_menu("menu")
+                }
+            })
+            break;
+        case "settings":
+            await openSettingsMenu(ctx)
+            break;
+        case "my_categories":
+            await selectMosque(ctx, "remove_category")
+            break;
+        case "back":
+            await backToMenu(ctx)
+            break;
+    
+        default:
+            break;
+    }
+})
+
+bot.use(router)
+bot.start()
+
 bot.command("start", async (ctx, next) => {
     const chat_id = ctx.msg.chat.id
-    console.log(chat_id);
-
+    
     let user = await getUser(ctx)
-
+    
+    if(user && (user.role != 2)){
+        await sendAlert(ctx, "Siz bu botdan foydalana olmaysiz")
+        return
+    }
+    
+    if(user && (user["mosque_admin.verified"] == false)){
+        await sendAlert(ctx, "Siz hali tasdiqlanmagansiz")
+        return
+    }
+    
     if (!user) {
-        const role = chat_id === configs.ADMIN_ID ? 1 : 3
+        console.log(chat_id);
         let body = {
             telegram_id: chat_id,
-            role: role,
+            role: 2,
             step: "name"
         }
         user = await fetchUrl(`/users`, "POST", body)
@@ -55,20 +102,8 @@ bot.command("start", async (ctx, next) => {
         ctx.session.step = "name"
         await askName(ctx)
         return
-    } else if (user) {
-        if (!user.full_name) {
-            ctx.session.step = "name"
-            await askName(ctx)
-            await updateUserStep(ctx, ctx.session.step)
-            return
-        }
-        if (!user.phone_number) {
-            ctx.session.step = "phone"
-            await askPhone(ctx)
-            await updateUserStep(ctx, ctx.session.step)
-            return
-        }
     }
+
 
     ctx.session.user = {
         tgid: chat_id,
@@ -78,12 +113,6 @@ bot.command("start", async (ctx, next) => {
     }
 
     ctx.session.step = user.step
-    if (user.step == "menu") {
-        await sendMenu(ctx)
-    }
-    else if (user.step == "category") {
-        await selectCategory(ctx, "select_category")
-    }
 })
 
 bot.on("message", async (ctx, next) => {
@@ -91,9 +120,16 @@ bot.on("message", async (ctx, next) => {
 
     let user = await getUser(ctx)
 
-    if (!user) {
-        await ctx.reply("Siz ro'yxatdan o'tmagansiz! Ro'yhatdan o'tish uchun /start buyrug'ini jo'nating")
+    if(user && (user.role != 2)){
+        await sendAlert(ctx, "Siz bu botdan foydalana olmaysiz")
         return
+    }
+    
+    if(ctx.session.step == "verification"){
+        if(user && (!user["mosque_admin.verified"])){
+            await sendAlert(ctx, "Siz hali tasdiqlanmagansiz")
+            return
+        }
     }
 
     ctx.session.user = {
@@ -117,18 +153,6 @@ bot.command("menu", async (ctx) => {
     await sendMenu(ctx)
 })
 
-// bot.hears("Tugatish", async (ctx) => {
-//     switch (ctx.session.step) {
-//         case "verify":
-//             await continueOrderProccess(ctx)
-//             ctx.session.step = "order"
-//             await updateUserStep(ctx, ctx.session.step)
-//             break;
-//         default:
-//             break;
-//     }
-// })
-
 const router = new Router(ctx => ctx.session.step)
 
 router.route("name", async ctx => {
@@ -141,13 +165,13 @@ router.route("name", async ctx => {
 router.route("phone", async (ctx) => {
     let p = await setPhone(ctx)
     if (!p) return
-    ctx.session.step = "category"
+    ctx.session.step = "select_mosque"
     await updateUserStep(ctx, ctx.session.step)
-    await selectCategory(ctx, "select_category")
+    await selectMosque(ctx)
 })
 
-router.route("category", async (ctx) => {
-    await selectCategory(ctx, "select_category")
+router.route("select_mosque", async (ctx) => {
+    await selectMosque(ctx, "select_category")
 })
 router.route("menu", async (ctx) => {
     await sendMenu(ctx)
@@ -160,21 +184,6 @@ bot.on("callback_query:data", async ctx => {
     } = require('query-string').parseUrl(ctx.callbackQuery.data)
 
     switch (command) {
-        case "select_category":
-            await setCategory(ctx, command)
-            break;
-        case "remove_category":
-            await setCategory(ctx, command)
-            break;
-        case "end_category":
-            await ctx.editMessageText(messages.regSuccessMsg+ "\n" + messages.menuMsg, {
-                message_id: ctx.callbackQuery.message.message_id,
-                parse_mode: "HTML",
-                reply_markup: InlineKeyboards.menu
-            })
-            ctx.session.step = "menu"
-            await updateUserStep(ctx, "menu")
-            break;
         case "all_mosques":
             await openSettingsMenu(ctx)
             break;
@@ -182,7 +191,7 @@ bot.on("callback_query:data", async ctx => {
             await openSettingsMenu(ctx)
             break;
         case "my_categories":
-            await selectCategory(ctx, "remove_category")
+            await selectMosque(ctx, "remove_category")
             break;
         case "back":
             await backToMenu(ctx)
@@ -205,6 +214,3 @@ bot.catch((err) => {
         console.error("Unknown error:", e);
     }
 });
-
-bot.use(router)
-bot.start()
