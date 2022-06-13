@@ -49,9 +49,7 @@ bot.on("callback_query:data", async ctx => {
             await ctx.editMessageText("Kerakli bo'limni tanlang:", {
                 message_id: ctx.callbackQuery.message.message_id,
                 parse_mode: "HTML",
-                reply_markup: {
-                    inline_keyboard: InlineKeyboards.ad_sections_menu("menu")
-                }
+                reply_markup: InlineKeyboards.ad_sections_menu("menu")
             })
             break;
         case "settings":
