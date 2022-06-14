@@ -28,19 +28,19 @@ bot.use(session({
     })
 }))
 
-// bot.api.setMyCommands([{
-//     command: "start",
-//     description: "Start the bot"
-// }
-// ]);
+bot.api.setMyCommands([{
+    command: "start",
+    description: "Start the bot"
+}
+]);
 
-
+console.log(configs.TG_TOKEN)
 bot.command("start", async (ctx, next) => {
     const chat_id = ctx.msg.chat.id
     
     let user = await getUser(ctx)
     
-    if(user && (user.role != 2)){
+    if(user && (user.role != 2 || user.role != 1)){
         await sendAlert(ctx, "Siz bu botdan foydalana olmaysiz")
         return
     }
