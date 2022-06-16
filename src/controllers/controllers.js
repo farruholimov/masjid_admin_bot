@@ -10,7 +10,7 @@ class Controllers {
 
     static async updateUserStep(ctx, step) {
         try {
-            await fetchUrl(`/users/${ctx.msg.chat.id}`, "PUT", {step: step})
+            await fetchUrl(`/users/${ctx.msg.chat.id}`, "PUT", {adstep: step})
         } catch (error) {
             console.log(error);
         }
@@ -109,6 +109,7 @@ class Controllers {
         
         const response = await fetchUrl(`/mosques/tg`)
 
+        console.log(response);
         let mosques = response?.data?.mosques
 
         await ctx.reply("Qaysi masjid nomidan ro'yxatdan o'tmoqchisiz?", {
@@ -121,22 +122,21 @@ class Controllers {
 
     }
 
-    static async setCategory(ctx, action) {
+    static async setMosque(ctx, action) {
 
         try {
             const user = await Controllers.getUser(ctx)
             const mosque_res = await fetchUrl(`/mosques/${ctx.msg.text}?byname=true`)
 
-            if ((mosque_res.message && mosque_res.message == "Not found") || !mosque_res.data || !mosque_res.data.ok) {
+            if (mosque_res.message && mosque_res.message == "Not found") {
                 await ctx.reply("Bu nomdagi masjid topilmadi", {
                     parse_mode: "HTML"
                 })
                 return false
             }
             const mosque = mosque_res.data.mosque
-            let exist = await fetchUrl(`/users/mosque-admin/${mosque.id}?bymosque=true`)
 
-            if (exist.ok && exist.data.user["mosque_admin.verified"]) {
+            if (mosque.mosque_admin && mosque.mosque_admin.verified) {
                 await ctx.reply("Bu masjidga allaqachon admin ro'yxatdan o'tgan!", {
                     parse_mode: "HTML"
                 })
@@ -145,7 +145,7 @@ class Controllers {
             
             await fetchUrl(`/users/mosque-admin`, "POST", {mosque_id: mosque.id, user_id: user.id})
 
-            await ctx.answerCallbackQuery()
+            return true
         } catch (error) {
             console.log(error);
         }
@@ -221,12 +221,11 @@ class Controllers {
 
     static async openSettingsMenu(ctx) {
 
-        // let user = await Controllers.getUser(ctx)
+        let user = await Controllers.getUser(ctx)
 
         await ctx.editMessageText(
-            `Profil:\n\n<i>Ismingiz:</i>  <b>Farruh Olimov</b>
-            \n<i>Telefon raqamingiz:</i>  <b>+998991123366</b>
-            \n<i>Login:</i>  <b>masjid1admin</b>`, {
+            `Profil:\n\n<i>Ismingiz:</i>  <b>${user.full_name}</b>
+            \n<i>Telefon raqamingiz:</i>  <b>${user.phone_number}</b>`, {
                 parse_mode: "HTML",
                 message_id: ctx.callbackQuery.message.message_id,
                 reply_markup: InlineKeyboards.user_info_menu("menu")
