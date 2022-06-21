@@ -157,7 +157,7 @@ class Controllers {
             let user = await fetchUrl(`/users/tg/login`, "POST", {username: ctx.session.user.username, password: ctx.session.user.password})
             console.log(user);
             if (!user.ok) {
-                await ctx.reply(messages.loginFailedMsg, {
+                await ctx.reply(user.message, {
                     parse_mode: "HTML"
                 })
                 return false
