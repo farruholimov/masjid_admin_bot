@@ -143,9 +143,9 @@ router.route("password", async (ctx) => {
         await updateUserStep(ctx, ctx.session.step)
         return
     }
-    ctx.session.step = "password"
+    ctx.session.step = "menu"
     await updateUserStep(ctx, ctx.session.step)
-    await askPassword(ctx)
+    await sendMenu(ctx)
 })
 
 router.route("menu", async (ctx) => {
