@@ -76,7 +76,7 @@ bot.command("start", async (ctx, next) => {
         await sendMenu(ctx)
         return
     }
-    if(ctx.session.step == "username"){
+    if(ctx.session.step == "username" || ctx.session.step == "idle"){
         await askUsername(ctx)
         return
     }
