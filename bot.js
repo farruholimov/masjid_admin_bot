@@ -6,7 +6,7 @@ const {
     HttpError
 } = require("grammy");
 const configs = require("./src/config");
-const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, selectMosque, setCategory, openSettingsMenu, backToMenu, getUser, s, selectMosqueendAlert, sendAlert, setMosque, changeCredentials } = require("./src/controllers/controllers");
+const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, selectMosque, setCategory, openSettingsMenu, backToMenu, getUser, s, selectMosqueendAlert, sendAlert, setMosque, changeCredentials, Login, askUsername, askPassword } = require("./src/controllers/controllers");
 const { Router } = require("@grammyjs/router");
 const messages = require("./src/assets/messages");
 const InlineKeyboards = require("./src/assets/inline_keyboard");
@@ -63,7 +63,6 @@ bot.command("start", async (ctx, next) => {
         return
     }
 
-
     ctx.session.user = {
         tgid: chat_id,
         id: user.id,
@@ -73,17 +72,6 @@ bot.command("start", async (ctx, next) => {
 
     ctx.session.step = user.adstep
 
-    if (!user.mosque_admin) {
-        ctx.session.step = "select_mosque"
-        await updateUserStep(ctx, ctx.session.step)
-        await selectMosque(ctx)
-        return
-    }else if(!user.mosque_admin.mosque_id){
-        ctx.session.step = "select_mosque"
-        await updateUserStep(ctx, ctx.session.step)
-        await selectMosque(ctx)
-        return
-    }
     if (ctx.session.step == "menu") {
         await sendMenu(ctx)
     }
@@ -128,28 +116,33 @@ router.route("name", async ctx => {
 router.route("phone", async (ctx) => {
     let p = await setPhone(ctx)
     if (!p) return
-    ctx.session.step = "select_mosque"
+    ctx.session.step = "username"
     await updateUserStep(ctx, ctx.session.step)
-    await selectMosque(ctx)
+    await askUsername(ctx)
 })
 
-router.route("select_mosque", async (ctx) => {
-    let x = await setMosque(ctx, "select_category")
-    if(!x) return
-    await ctx.reply("Siz vaqtincha ro'yxatga olindingiz! Administratorlar javobini kuting!", {
-        parse_mode: "HTML",
-        reply_markup: {
-            remove_keyboard: true
-        }
-    })
-    ctx.session.step = "verification"
-    await updateUserStep(ctx, "verification")
+router.route("username", async (ctx) => {
+    ctx.session.user.username = ctx.msg.text
+    ctx.session.step = "password"
+    await updateUserStep(ctx, ctx.session.step)
+    await askPassword(ctx)
 })
+
+router.route("password", async (ctx) => {
+    let p = await Login(ctx)
+    if (!p) {
+        await askUsername(ctx)
+        ctx.session.step = "username"
+        await updateUserStep(ctx, ctx.session.step)
+        return
+    }
+    ctx.session.step = "password"
+    await updateUserStep(ctx, ctx.session.step)
+    await askPassword(ctx)
+})
+
 router.route("menu", async (ctx) => {
     await sendMenu(ctx)
-})
-router.route("verification", async (ctx) => {
-    await ctx.reply("ddweded")
 })
 
 router.route(`edit_user_info:name`, async (ctx) => {
