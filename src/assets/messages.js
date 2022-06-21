@@ -2,6 +2,7 @@ const messages = {
   selectCategoriesMsg: "Kerakli kategoriyalarni tanlang",
   nameMsg: "<b>Ro'yxatdan o'tish uchun ismigizni va familiyangizni kiriting:</b>",
   loginMsg: "<b>Loginni kiriting:</b>",
+  pswdMsg: "<b>Parolni kiriting:</b>",
   loginFailedMsg: "<b>Ma'lumotlar mos kelmadi. Qayta urining!</b>",
     inputNameMsg: "<b>Ismingizni kiriting:</b>",
     telMsg: "<b>Telefon raqamingizni</b> yuboring:\n\nNamuna: <i>+998901234567</i>",

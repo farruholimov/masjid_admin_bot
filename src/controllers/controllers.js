@@ -144,7 +144,7 @@ class Controllers {
     }
 
     static async askPassword(ctx) {
-        await ctx.reply(messages.loginMsg, {
+        await ctx.reply(messages.pswdMsg, {
             parse_mode: "HTML"
         })
     }
