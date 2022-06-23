@@ -155,9 +155,20 @@ class Controllers {
             ctx.session.password = ctx.msg.text
             console.log(ctx.session.username, ctx.session.password);
             let user = await fetchUrl(`/users/tg/login`, "POST", {telegram_id: ctx.msg.chat.id, username: ctx.session.username, password: ctx.session.password})
-            console.log(user);
+            let text = "Xatolik yuz berdi"
+            switch (user?.message) {
+                case "Mosque not found!":
+                    text = "Masjid topilmadi!"
+                    break;
+                case "Incorrect username or password!":
+                    text = "Ma'lumotlar mos kelmadi!"
+                    break
+                default:
+                    break;
+            }
+
             if (!user.ok) {
-                await ctx.reply(user.message, {
+                await ctx.reply(text, {
                     parse_mode: "HTML"
                 })
                 return false
