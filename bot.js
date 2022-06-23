@@ -97,6 +97,17 @@ bot.on("message", async (ctx, next) => {
     }
 
     ctx.session.step = user.adstep
+
+    if (ctx.session.step == "menu") {
+        await sendMenu(ctx)
+        return
+    }
+    if(ctx.session.step == "username" || ctx.session.step == "idle" || ctx.session.step == "password"){
+        ctx.session.step = "username"
+        await updateUserStep(ctx, "username")
+        await askUsername(ctx)
+        return
+    }
     next()
 })
 
