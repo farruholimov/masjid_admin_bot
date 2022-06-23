@@ -129,8 +129,7 @@ router.route("phone", async (ctx) => {
 })
 
 router.route("username", async (ctx) => {
-    ctx.session.user.username = ctx.msg.text
-    console.log(ctx.session.user.username);
+    ctx.session.username = ctx.msg.text
     ctx.session.step = "password"
     await updateUserStep(ctx, ctx.session.step)
     await askPassword(ctx)

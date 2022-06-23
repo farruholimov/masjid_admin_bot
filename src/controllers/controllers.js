@@ -152,9 +152,9 @@ class Controllers {
     
     static async Login(ctx) {
         try {
-            ctx.session.user.password = ctx.msg.text
-            // console.log(ctx.session.user.username, ctx.session.user.password);
-            let user = await fetchUrl(`/users/tg/login`, "POST", {telegram_id: ctx.msg.chat.id, username: ctx.session.user.username, password: ctx.session.user.password})
+            ctx.session.password = ctx.msg.text
+            console.log(ctx.session.username, ctx.session.password);
+            let user = await fetchUrl(`/users/tg/login`, "POST", {telegram_id: ctx.msg.chat.id, username: ctx.session.username, password: ctx.session.password})
             console.log(user);
             if (!user.ok) {
                 await ctx.reply(user.message, {
