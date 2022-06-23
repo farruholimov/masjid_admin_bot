@@ -18,6 +18,7 @@ const bot = new Bot(configs.TG_TOKEN)
 bot.use(session({
     initial: () => ({
         step: "idle",
+        login: false, 
         user: {
             id: null,
             tgid: null,
@@ -72,11 +73,17 @@ bot.command("start", async (ctx, next) => {
 
     ctx.session.step = user.adstep
 
-    if (ctx.session.step == "menu") {
+    if (!ctx.session.login) {
+        ctx.session.step = "username"
+        await updateUserStep(ctx, "username")
+        await askUsername(ctx)
+        return
+    }
+    else if (ctx.session.step == "menu") {
         await sendMenu(ctx)
         return
     }
-    if(ctx.session.step == "username" || ctx.session.step == "idle" || ctx.session.step == "password"){
+    else if(ctx.session.step == "username" || ctx.session.step == "idle" || ctx.session.step == "password"){
         ctx.session.step = "username"
         await updateUserStep(ctx, "username")
         await askUsername(ctx)
@@ -86,6 +93,11 @@ bot.command("start", async (ctx, next) => {
 
 bot.on("message", async (ctx, next) => {
     const chat_id = ctx.msg.chat.id
+
+    if (!ctx.session.login) {
+        await ctx.reply("Sessiyangiz eskirgan. Login qilish uchun /start buyrug'ini jo'nating")
+        return
+    }
 
     let user = await getUser(ctx)
 
@@ -105,6 +117,11 @@ bot.command("menu", async (ctx) => {
 
     if(!user || !user.mosque_admin){
         await ctx.reply("Siz ro'yxatdan o'tmagansiz! Ro'yhatdan o'tish uchun /start buyrug'ini jo'nating")
+        return
+    }
+
+    if (!ctx.session.login) {
+        await ctx.reply("Sessiyangiz eskirgan. Login qilish uchun /start buyrug'ini jo'nating")
         return
     }
 
