@@ -29,10 +29,19 @@ bot.use(session({
     })
 }))
 
-bot.api.setMyCommands([{
-    command: "start",
-    description: "Start the bot"
-}
+bot.api.setMyCommands([
+    {
+        command: "start",
+        description: "Botni (qayta) ishga tushurish"
+    },
+    {
+        command: "menu",
+        description: "Asosiy menyu"
+    },
+    {
+        command: "logout",
+        description: "Chiqish / Sessiyani tugatish"
+    },
 ]);
 
 bot.command("start", async (ctx, next) => {
