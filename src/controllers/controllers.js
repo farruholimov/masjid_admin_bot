@@ -163,6 +163,9 @@ class Controllers {
                 case "Incorrect username or password!":
                     text = "Ma'lumotlar mos kelmadi!"
                     break
+                case "Not mosque admin!":
+                    text = "Siz bu masjidga admin emassiz!"
+                    break
                 default:
                     break;
             }
