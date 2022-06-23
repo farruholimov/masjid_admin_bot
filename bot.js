@@ -94,7 +94,7 @@ bot.command("start", async (ctx, next) => {
 bot.on("message", async (ctx, next) => {
     const chat_id = ctx.msg.chat.id
 
-    if (!ctx.session.login && !ctx.session.step == "username" && !ctx.session.step == "password") {
+    if (!ctx.session.login && ctx.session.step != "username" && ctx.session.step != "password") {
         await ctx.reply("Sessiyangiz eskirgan. Login qilish uchun /start buyrug'ini jo'nating")
         return
     }
