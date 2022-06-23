@@ -128,6 +128,10 @@ bot.command("menu", async (ctx) => {
     await sendMenu(ctx)
 })
 
+bot.command("logout", async ctx => {
+    ctx.session.login = false
+})
+
 const router = new Router((ctx) => ctx.session.step)
 
 router.route("name", async ctx => {
