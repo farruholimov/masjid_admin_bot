@@ -188,9 +188,10 @@ class Controllers {
     // MENU
 
     static async sendMenu(ctx, additional) {
+        const notification_count = await fetchUrl(`/notifications?count=true`)
         await ctx.reply((additional ? additional + "\n" : '') + messages.menuMsg, {
             parse_mode: "HTML",
-            reply_markup: InlineKeyboards.menu
+            reply_markup: InlineKeyboards.menu(String(notification_count.data.count))
         })
     }
 
