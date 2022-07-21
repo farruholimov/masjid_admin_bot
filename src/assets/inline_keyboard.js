@@ -49,6 +49,7 @@ const InlineKeyboards = {
     user_info_menu: (step) =>
         new InlineKeyboard()
         .text("✏️ Ismni o'zgartirish", `change_user_info?step=name`)
+        .row()
         .text("✏️ Raqamni o'zgartirish", `change_user_info?step=phone`)
         .row()
         .text("Orqaga ↩️", `back?step=${step}`),
@@ -73,6 +74,7 @@ const InlineKeyboards = {
         new InlineKeyboard()
         .webApp("🗒 Mening e'lonlarim", `https://mosque-bot.vercel.app/announcements`)
         // .webApp("E'lon berish", "https://mosque-bot.vercel.app/add-announcement")
+        .row()
         .text("📢 E'lon berish", "new_ad")
         .row()
         .text("Orqaga ↩️", `back?step=${step}`),
