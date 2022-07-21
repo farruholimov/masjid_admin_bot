@@ -14,8 +14,10 @@ const Keyboards = {
     .row()
     .text("tonna")
     .text("litr")
-    .text("qop")
+    .text("metr")
+    .text("metr \u00B2")
     .row()
+    .text("qop")
     .text("quti")
     .text("blok"),
 

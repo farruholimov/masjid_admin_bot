@@ -6,7 +6,7 @@ const {
     HttpError
 } = require("grammy");
 const configs = require("./src/config");
-const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, openSettingsMenu, backToMenu, getUser, sendAlert, changeCredentials, Login, askUsername, askPassword, askAdName, setAdName, setAdAmount, askAdAmount, askAdAmountType, setAdAmountType, setAdText, sendCategories } = require("./src/controllers/controllers");
+const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, openSettingsMenu, backToMenu, getUser, sendAlert, changeCredentials, Login, askUsername, askPassword, askAdName, setAdName, setAdAmount, askAdAmount, askAdAmountType, setAdAmountType, setAdText, sendCategories, askAdText, sendResult, createAd } = require("./src/controllers/controllers");
 const { Router } = require("@grammyjs/router");
 const messages = require("./src/assets/messages");
 const InlineKeyboards = require("./src/assets/inline_keyboard");
@@ -33,6 +33,7 @@ bot.use(session({
             amount: null,
             amount_type: null,
         },
+        editing: false,
         messages_to_delete: []
     })
 }))
@@ -125,6 +126,7 @@ bot.on("message", async (ctx, next) => {
     }
 
     ctx.session.step = user.adstep
+
     next()
 })
 
@@ -159,6 +161,8 @@ bot.hears("Bekor qilish", async (ctx) => {
     await updateUserStep(ctx, ctx.session.step)
     await sendMenu(ctx)
 })
+
+// ROUTES
 
 const router = new Router((ctx) => ctx.session.step)
 
@@ -227,6 +231,12 @@ router.route(`edit_user_info:phone`, async (ctx) => {
 
 router.route(`ad:name`, async (ctx) => {
     await setAdName(ctx)
+    if (ctx.session.editing) {
+        ctx.session.step = "ad:result"
+        ctx.session.editing = false
+        await sendResult(ctx)
+        return
+    }
     ctx.session.step = "ad:amount"
     await updateUserStep(ctx, ctx.session.step)
     await askAdAmount(ctx)
@@ -243,17 +253,31 @@ router.route(`ad:amount`, async (ctx) => {
 router.route(`ad:amount_type`, async (ctx) => {
     let x = await setAdAmountType(ctx)
     if (!x) return
+    if (ctx.session.editing) {
+        ctx.session.step = "ad:result"
+        ctx.session.editing = false
+        await sendResult(ctx)
+        return
+    }
     ctx.session.step = "ad:text"
     await updateUserStep(ctx, ctx.session.step)
-    await askAdAmountType(ctx)
+    await askAdText(ctx, 0, "send")
 })
 
 router.route(`ad:text`, async (ctx) => {
     await setAdText(ctx)
+    if (ctx.session.editing) {
+        ctx.session.step = "ad:result"
+        ctx.session.editing = false
+        await sendResult(ctx)
+        return
+    }
     ctx.session.step = "ad:category"
     await updateUserStep(ctx, ctx.session.step)
-    await askAdAmountType(ctx)
+    await sendCategories(ctx, 0, "send")
 })
+
+// CALLBACK
 
 bot.on("callback_query:data", async ctx => {
     const {
@@ -286,6 +310,73 @@ bot.on("callback_query:data", async ctx => {
             ctx.session.step = "ad:name"
             await updateUserStep(ctx, ctx.session.step)
             break;
+        case "parent_category":
+            await sendCategories(ctx, 0, "edit", true)
+            break;
+        case "child_category":
+            ctx.session.ad.category_id = query.category_id
+            await sendResult(ctx, "edit")
+            ctx.session.step = "ad:result"
+            await updateUserStep(ctx, ctx.session.step)
+            break;
+        case "edit_ad":
+            await ctx.editMessageReplyMarkup({
+                message_id: ctx.callbackQuery.message.message_id,
+                reply_markup: InlineKeyboards.ad_edit_menu("ad:result")
+            }) 
+            ctx.session.step = "ad:edit"
+            ctx.session.editing = true
+            await updateUserStep(ctx, ctx.session.step)
+            break;
+        case "cancel_ad":
+            for (const key of Object.keys(ctx.session.ad)) {
+                ctx.session.ad[key] = null
+            }
+            await ctx.api.deleteMessage(ctx.callbackQuery.message.chat.id, ctx.callbackQuery.message.message_id)
+            await ctx.reply("E'lon berish bekor qilindi.",{
+                parse_mode: "HTML",
+                reply_markup: {
+                    remove_keyboard: true,
+                }
+            }) 
+            ctx.session.step = "menu"
+            await updateUserStep(ctx, ctx.session.step)
+            await sendMenu(ctx)
+            break;
+        case "send_ad":
+            await createAd(ctx)
+            ctx.session.step = "menu"
+            await updateUserStep(ctx, ctx.session.step)
+            await sendMenu(ctx)
+            break;
+        case "ad:edit_name":
+            await askAdName(ctx)
+            ctx.session.step = "ad:name"
+            await updateUserStep(ctx, ctx.session.step)
+            break
+        case "ad:edit_text":
+            await ctx.editMessageText("Qo'shimcha izohni kiriting:",{
+                reply_markup: {
+                    inline_keyboard: []
+                }
+            })
+            ctx.session.step = "ad:text"
+            await updateUserStep(ctx, ctx.session.step)
+            break
+        case "ad:edit_amount":
+            await ctx.editMessageText("Kerakli miqdorni kiriting:",{
+                reply_markup: {
+                    inline_keyboard: []
+                }
+            })
+            ctx.session.step = "ad:amount"
+            await updateUserStep(ctx, ctx.session.step)
+            break;
+        case "ad:edit_category":
+            await sendCategories(ctx, 0, "edit")
+            ctx.session.step = "ad:category"
+            await updateUserStep(ctx, ctx.session.step)
+            break;
         case "back":
             await backToMenu(ctx)
             break;
@@ -306,11 +397,11 @@ bot.on("callback_query:data", async ctx => {
             }
             break;
         case "no":
-            switch (query) {
+            switch (query.step) {
                 case "ad:text":
                     ctx.session.step = "ad:category"
                     await updateUserStep(ctx, ctx.session.step)
-                    await sendCategories(ctx, query.page)
+                    await sendCategories(ctx, 0, "edit")
                     await ctx.answerCallbackQuery()
                     break;
                 default:
@@ -318,6 +409,7 @@ bot.on("callback_query:data", async ctx => {
                     break;
             }
         default:
+            await ctx.answerCallbackQuery()
             break;
     }
 })

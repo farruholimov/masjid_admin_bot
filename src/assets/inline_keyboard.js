@@ -5,24 +5,30 @@ const {
 const { API_URL: baseUrl } = require("../config")
 
 const InlineKeyboards = {
-    select_categories: function (categories, page, pages) {
+    select_categories: function (categories, page, pages, children = false) {
         let menu = [
             [{
                 text: "◀️",
                 callback_data: `prev_categories?page=${page-1}`
             },{
                 text: `${page+1}/${pages}`,
-                callback_data: null
+                callback_data: `pages`
             },{
                 text: "▶️",
                 callback_data: `next_categories?page=${page + 1}`
             }]
         ]
+        if (children) {
+            menu.push([{
+                text: "Orqaga",
+                callback_data: `back?step=category`
+            }])
+        }
         // if (!categories.length) return menu
         for (const category of categories) {
             menu.unshift([{
                 text: category.name,
-                callback_data: `set_category?category_id=${category.id}`
+                callback_data: `${children ? "child_category" : "parent_category"}?category_id=${category.id}`
             }])
         }
         return menu
@@ -46,6 +52,23 @@ const InlineKeyboards = {
         .text("Raqamni o'zgartirish", `change_user_info?step=phone`)
         .row()
         .text("Orqaga", `back?step=${step}`),
+
+    ad_result_menu:
+        new InlineKeyboard()
+        .text("Bekor qilish", `cancel_ad`)
+        .text("O'zgartirish", `edit_ad`)
+        .row()
+        .text("Jo'natish", `send_ad`),
+    ad_edit_menu: (step) =>
+        new InlineKeyboard()
+        .text("Sarlavha", `ad:edit_name`)
+        .text("Miqdor", `ad:edit_amount`)
+        .row()
+        .text("Izoh", `ad:edit_text`)
+        .text("Bo'lim", `ad:edit_category`)
+        .row()
+        .text("Orqaga", `back?step=${step}`),
+
     ad_sections_menu: (step) =>
         new InlineKeyboard()
         .webApp("Mening e'lonlarim", `https://mosque-bot.vercel.app/announcements`)

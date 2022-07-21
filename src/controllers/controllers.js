@@ -158,7 +158,7 @@ class Controllers {
             let text = "Xatolik yuz berdi"
             switch (user?.message) {
                 case "Mosque not found!":
-                    text = "Masjid topilmadi!"
+                    text = "Ma'lumotlar xato!"
                     break;
                 case "Incorrect username or password!":
                     text = "Ma'lumotlar mos kelmadi!"
@@ -187,9 +187,16 @@ class Controllers {
 
     // MENU
 
-    static async sendMenu(ctx, additional) {
+    static async sendMenu(ctx, additional, edit=false) {
         const user = await Controllers.getUser(ctx) 
         const notification_count = await fetchUrl(`/notifications/${user.id}?count=true`)
+        edit ? 
+        await ctx.editMessageText((additional ? additional + "\n" : '') + messages.menuMsg, {
+            message_id: ctx.callbackQuery ? ctx.callbackQuery.message.message_id : ctx.message.message_id,
+            parse_mode: "HTML",
+            reply_markup: InlineKeyboards.menu(String(notification_count.data.count))
+        })
+        :
         await ctx.reply((additional ? additional + "\n" : '') + messages.menuMsg, {
             parse_mode: "HTML",
             reply_markup: InlineKeyboards.menu(String(notification_count.data.count))
@@ -223,9 +230,20 @@ class Controllers {
                     reply_markup: InlineKeyboards.menu
                 })
                 break;
+            case "ad:result":
+                await ctx.editMessageReplyMarkup({
+                    message_id: ctx.callbackQuery.message.message_id,
+                    reply_markup: InlineKeyboards.ad_result_menu
+                })
+                break;
         
             case "settings":
                 Controllers.openSettingsMenu(ctx)
+                break;
+        
+            case "category":
+                Controllers.sendCategories(ctx, 0, "edit")
+                ctx.session.step = "ad:category"
                 break;
         
             default:
@@ -238,11 +256,10 @@ class Controllers {
     // Ad
 
     static async askAdName(ctx) {
-        await ctx.reply("E'lon sarlavhasini kiriting:\n (Sarlavhada batafsil ma'lumot va miqdor ko'rsatilishi shart emas)", {
+        await ctx.editMessageText("E'lon sarlavhasini kiriting:\n (Sarlavhada batafsil ma'lumot va miqdor ko'rsatilishi shart emas)", {
             parse_mode: "HTML",
             reply_markup: {
-                keyboard: Keyboards.verify_order.build(),
-                resize_keyboard: true,
+                inline_keyboard: []
             }
         })
         await ctx.answerCallbackQuery()
@@ -266,6 +283,7 @@ class Controllers {
             return false
         }
         ctx.session.ad.amount = ctx.msg.text
+        return true
     }
 
     static async askAdAmountType(ctx) {
@@ -274,27 +292,20 @@ class Controllers {
             reply_markup: {
                 keyboard: Keyboards.amount_types.build(),
                 resize_keyboard: true,
+                one_time_keyboard: true
             }
         })
     }
 
     static async setAdAmountType(ctx) {
         ctx.session.ad.amount_type = ctx.msg.text
+        return true
     }
 
     static async askAdText(ctx) {
         await ctx.reply("Qo'shimcha izoh qoldirasizmi?", {
             parse_mode: "HTML",
-            reply_markup: {
-                keyboard: Keyboards.verify_order.build(),
-            }
-        })
-        await ctx.deleteMessage()
-        await ctx.reply("Qo'shimcha izoh qoldirasizmi?", {
-            parse_mode: "HTML",
-            reply_markup: {
-                inline_keyboard: InlineKeyboards.yes_no("ad:text"),
-            }
+            reply_markup: InlineKeyboards.yes_no("ad:text")
         })
     }
 
@@ -302,22 +313,69 @@ class Controllers {
         ctx.session.ad.text = ctx.msg.text
     }
 
-    static async sendCategories(ctx, page, action){
+    static async sendCategories(ctx, page, action, children = false){
         try {
-            const categories = await fetchUrl(`/categories/tg${page ? `?page=${page}` : ""}`)
-            action == "edit" ?
-            await ctx.editMessage("Kerakli bo'limni tanlang:", {
+            let categories = await fetchUrl(`/categories/tg${page ? `?page=${page}` : ""}`)
+            if(action == "edit") {
+                const { query } = require("query-string").parseUrl(ctx.callbackQuery.data)
+                categories = await fetchUrl(`/categories/tg${page ? `?page=${page}` : ""}${children ? `${page ? "&" : "?"}parent_id=${query.category_id}` : ""}`)
+                console.log(`/categories/tg${page ? `?page=${page}` : ""}${children ? ` ${page ? "&" : "?"}parent_id=${query.category_id}` : ""}`);
+                await ctx.editMessageText(children ? "Asosiy bo'limni tanlang.\n Aynan shu bo'lim e'longa biriktiriladi." : "Kerakli bo'limni tanlang:", {
+                    message_id: ctx.callbackQuery.message.message_id,
+                    reply_markup: {
+                        inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages, children)
+                    }
+                })
+            }else {
+                await ctx.reply(children ? "Asosiy bo'limni tanlang.\n Aynan shu bo'lim e'longa biriktiriladi." : "Kerakli bo'limni tanlang:", {
+                    parse_mode: "HTML",
+                    reply_markup: {
+                        inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages, children)
+                    }
+                })
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    static async sendResult(ctx, action="send"){
+        try {
+            const category = await fetchUrl(`/categories/${ctx.session.ad.category_id}`)
+            const parent = await fetchUrl(`/categories/${category.data.category.parent_id}`)
+            let text = `Sarlavha: ${ctx.session.ad.name}\nMiqdor: ${ctx.session.ad.amount} ${ctx.session.ad.amount_type}\nIzoh: ${ctx.session.ad.text ? ctx.session.ad.text : ""}\nBo'lim: ${parent.data.category.name} ➡️ ${category.data.category.name}`
+
+            action == "edit" ? 
+            await ctx.editMessageText(text, {
                 message_id: ctx.callbackQuery.message.message_id,
+                parse_mode: "HTML",
+                reply_markup: InlineKeyboards.ad_result_menu
+            })
+            : await ctx.reply(text, {
+                parse_mode: "HTML",
+                reply_markup: InlineKeyboards.ad_result_menu
+            })
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    static async createAd(ctx) {
+        try {
+            const user = await Controllers.getUser(ctx)
+            const result = ctx.session.ad
+            const ad = await fetchUrl(`/ads`, "POST", {...result, mosque_id: user.mosque_admin.mosque_id})
+            ad.ok ? 
+            await ctx.reply("E'lon muvaffaqiyatli yaratildi.", {
                 reply_markup: {
-                    inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages)
+                    remove_keyboard: true
                 }
             })
-            : await ctx.reply("Kerakli bo'limni tanlang:", {
-                parse_mode: "HTML",
+            : await ctx.reply("Xatolik yuz berdi! Iltimos, qayta urining.", {
                 reply_markup: {
-                    inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages)
+                    remove_keyboard: true
                 }
-            });
+            })
         } catch (error) {
             console.log(error);
         }
