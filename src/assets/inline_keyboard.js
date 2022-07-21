@@ -5,35 +5,33 @@ const {
 const { API_URL: baseUrl } = require("../config")
 
 const InlineKeyboards = {
-    select_categories: function (categories, action) {
+    select_categories: function (categories, page, pages) {
         let menu = [
             [{
-                text: "Davom etish",
-                callback_data: `end_category`
+                text: "◀️",
+                callback_data: `prev_categories?page=${page-1}`
+            },{
+                text: `${page+1}/${pages}`,
+                callback_data: null
+            },{
+                text: "▶️",
+                callback_data: `next_categories?page=${page + 1}`
             }]
         ]
-        if (action == "remove_category") {
-            menu = [
-                [{
-                    text: "Orqaga",
-                    callback_data: `back?step=settings`
-                }]
-            ]
-        }
         // if (!categories.length) return menu
         for (const category of categories) {
             menu.unshift([{
                 text: category.name,
-                callback_data: `${action}?category_id=${category.id}`
+                callback_data: `set_category?category_id=${category.id}`
             }])
         }
         return menu
     },
 
-    menu: new InlineKeyboard()
-        .webApp("Masjidlar", `https://mosque-bot.vercel.app/`)
-        .row()
-        .text("E'lonlar", "all_ads")
+    menu: (notifications_count = "na") => new InlineKeyboard()
+    .text("E'lonlar", "all_ads")
+    .row()
+    .webApp(`Bildirishnomalar ${notifications_count}`, `https://mosque-bot.vercel.app/notifications`)
         .text("Sozlamalar", "settings"),
 
     menu_switch: (offset, step) => new InlineKeyboard()
@@ -50,12 +48,13 @@ const InlineKeyboards = {
         .text("Orqaga", `back?step=${step}`),
     ad_sections_menu: (step) =>
         new InlineKeyboard()
-        .webApp("Barcha e'lonlar", `https://mosque-bot.vercel.app/announcements`)
         .webApp("Mening e'lonlarim", `https://mosque-bot.vercel.app/announcements`)
-        .webApp("E'lon berish", "https://mosque-bot.vercel.app/add-announcement")
+        // .webApp("E'lon berish", "https://mosque-bot.vercel.app/add-announcement")
+        .text("E'lon berish", "new_ad")
         .row()
         .text("Orqaga", `back?step=${step}`),
 
+    yes_no: (step) => new InlineKeyboard().text("Yo'q", `no?step=${step}`).text("Ha", `yes?step=${step}`),
     back: (value) => new InlineKeyboard().text("Orqaga", `back?step=${value}`),
 }
 

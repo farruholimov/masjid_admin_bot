@@ -233,7 +233,93 @@ class Controllers {
         await ctx.answerCallbackQuery()
     }
 
+    // Ad
 
+    static async askAdName(ctx) {
+        await ctx.reply("E'lon sarlavhasini kiriting:\n (Sarlavhada batafsil ma'lumot va miqdor ko'rsatilishi shart emas)", {
+            parse_mode: "HTML",
+            reply_markup: {
+                keyboard: Keyboards.verify_order.build(),
+                resize_keyboard: true,
+            }
+        })
+        await ctx.answerCallbackQuery()
+    }
+
+    static async setAdName(ctx) {
+        ctx.session.ad.name = ctx.msg.text
+    }
+
+    static async askAdAmount(ctx) {
+        await ctx.reply("Kerakli miqdorni kiriting:", {
+            parse_mode: "HTML"
+        })
+    }
+
+    static async setAdAmount(ctx) {
+        if (isNaN(ctx.msg.text)) {
+            let m = await ctx.reply("Iltimos, miqdor sifatida son jo'nating!")
+            ctx.session.messages_to_delete.push(m.message_id)
+            ctx.session.messages_to_delete.push(ctx.msg.message_id)
+            return false
+        }
+        ctx.session.ad.amount = ctx.msg.text
+    }
+
+    static async askAdAmountType(ctx) {
+        await ctx.reply("Miqdor birligini tanlang yoki kiriting:", {
+            parse_mode: "HTML",
+            reply_markup: {
+                keyboard: Keyboards.amount_types.build(),
+                resize_keyboard: true,
+            }
+        })
+    }
+
+    static async setAdAmountType(ctx) {
+        ctx.session.ad.amount_type = ctx.msg.text
+    }
+
+    static async askAdText(ctx) {
+        await ctx.reply("Qo'shimcha izoh qoldirasizmi?", {
+            parse_mode: "HTML",
+            reply_markup: {
+                keyboard: Keyboards.verify_order.build(),
+            }
+        })
+        await ctx.deleteMessage()
+        await ctx.reply("Qo'shimcha izoh qoldirasizmi?", {
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: InlineKeyboards.yes_no("ad:text"),
+            }
+        })
+    }
+
+    static async setAdText(ctx) {
+        ctx.session.ad.text = ctx.msg.text
+    }
+
+    static async sendCategories(ctx, page, action){
+        try {
+            const categories = await fetchUrl(`/categories/tg${page ? `?page=${page}` : ""}`)
+            action == "edit" ?
+            await ctx.editMessage("Kerakli bo'limni tanlang:", {
+                message_id: ctx.callbackQuery.message.message_id,
+                reply_markup: {
+                    inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages)
+                }
+            })
+            : await ctx.reply("Kerakli bo'limni tanlang:", {
+                parse_mode: "HTML",
+                reply_markup: {
+                    inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages)
+                }
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    }
 }
 
 async function editMessage(ctx, message_id, message_type, text, reply_markup) {

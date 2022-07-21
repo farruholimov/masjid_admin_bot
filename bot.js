@@ -6,11 +6,12 @@ const {
     HttpError
 } = require("grammy");
 const configs = require("./src/config");
-const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, selectMosque, setCategory, openSettingsMenu, backToMenu, getUser, s, selectMosqueendAlert, sendAlert, setMosque, changeCredentials, Login, askUsername, askPassword } = require("./src/controllers/controllers");
+const { askName, askPhone, setName, updateUserStep, sendMenu, setPhone, openSettingsMenu, backToMenu, getUser, sendAlert, changeCredentials, Login, askUsername, askPassword, askAdName, setAdName, setAdAmount, askAdAmount, askAdAmountType, setAdAmountType, setAdText, sendCategories } = require("./src/controllers/controllers");
 const { Router } = require("@grammyjs/router");
 const messages = require("./src/assets/messages");
 const InlineKeyboards = require("./src/assets/inline_keyboard");
 const fetchUrl = require("./src/modules/fetch_url");
+const Keyboards = require("./src/assets/keyboards");
 
 
 const bot = new Bot(configs.TG_TOKEN)
@@ -24,6 +25,13 @@ bot.use(session({
             tgid: null,
             name: null,
             phone: null,
+        },
+        ad: {
+            name: null,
+            category_id: null,
+            text: null,
+            amount: null,
+            amount_type: null,
         },
         messages_to_delete: []
     })
@@ -46,7 +54,6 @@ bot.api.setMyCommands([
 
 bot.command("start", async (ctx, next) => {
     const chat_id = ctx.msg.chat.id
-    
     let user = await getUser(ctx)
     
     if(user && user.mosque_admin){
@@ -141,6 +148,18 @@ bot.command("logout", async ctx => {
     ctx.session.login = false
 })
 
+bot.hears("Bekor qilish", async (ctx) => {
+    await ctx.reply("E'lon berish bekor qilindi", {
+        parse_mode: "HTML",
+        reply_markup: {
+            remove_keyboard: true,
+        }
+    })
+    ctx.session.step = "menu"
+    await updateUserStep(ctx, ctx.session.step)
+    await sendMenu(ctx)
+})
+
 const router = new Router((ctx) => ctx.session.step)
 
 router.route("name", async ctx => {
@@ -204,6 +223,38 @@ router.route(`edit_user_info:phone`, async (ctx) => {
     await updateUserStep(ctx, ctx.session.step)
 })
 
+// AD
+
+router.route(`ad:name`, async (ctx) => {
+    await setAdName(ctx)
+    ctx.session.step = "ad:amount"
+    await updateUserStep(ctx, ctx.session.step)
+    await askAdAmount(ctx)
+})
+
+router.route(`ad:amount`, async (ctx) => {
+    let x = await setAdAmount(ctx)
+    if (!x) return
+    ctx.session.step = "ad:amount_type"
+    await updateUserStep(ctx, ctx.session.step)
+    await askAdAmountType(ctx)
+})
+
+router.route(`ad:amount_type`, async (ctx) => {
+    let x = await setAdAmountType(ctx)
+    if (!x) return
+    ctx.session.step = "ad:text"
+    await updateUserStep(ctx, ctx.session.step)
+    await askAdAmountType(ctx)
+})
+
+router.route(`ad:text`, async (ctx) => {
+    await setAdText(ctx)
+    ctx.session.step = "ad:category"
+    await updateUserStep(ctx, ctx.session.step)
+    await askAdAmountType(ctx)
+})
+
 bot.on("callback_query:data", async ctx => {
     const {
         url: command,
@@ -230,10 +281,42 @@ bot.on("callback_query:data", async ctx => {
         case "change_user_info":
             await changeCredentials(ctx)
             break;
+        case "new_ad":
+            await askAdName(ctx)
+            ctx.session.step = "ad:name"
+            await updateUserStep(ctx, ctx.session.step)
+            break;
         case "back":
             await backToMenu(ctx)
             break;
-    
+        case "yes":
+            switch (query.step) {
+                case "ad:text":
+                    await ctx.editMessageText("Qo'shimcha izohni kiriting:", {
+                        message_id: ctx.callbackQuery.message.message_id,
+                        reply_markup: {
+                            inline_keyboard: []
+                        }
+                    })
+                    await ctx.answerCallbackQuery()
+                    break;
+                default:
+                    await ctx.answerCallbackQuery()
+                    break;
+            }
+            break;
+        case "no":
+            switch (query) {
+                case "ad:text":
+                    ctx.session.step = "ad:category"
+                    await updateUserStep(ctx, ctx.session.step)
+                    await sendCategories(ctx, query.page)
+                    await ctx.answerCallbackQuery()
+                    break;
+                default:
+                    await ctx.answerCallbackQuery()
+                    break;
+            }
         default:
             break;
     }

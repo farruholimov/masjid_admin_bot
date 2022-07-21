@@ -6,6 +6,19 @@ const Keyboards = {
     verify_order: new Keyboard().text("Bekor qilish").text("Tasdiqlash"),
     cancel_order: new Keyboard().text("Buyurtmani bekor qilish"),
     yes_no: new Keyboard().text("Yo'q").text("Ha"),
+    amount_types: 
+    new Keyboard()
+    .text("so'm")
+    .text("kg")
+    .text("dona")
+    .row()
+    .text("tonna")
+    .text("litr")
+    .text("qop")
+    .row()
+    .text("quti")
+    .text("blok"),
+
     select_mosque: function (mosques) {
         let menu = []
         for (let mosque = 0; mosque <= mosques.length; mosque+=2) {
