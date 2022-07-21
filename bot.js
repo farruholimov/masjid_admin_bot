@@ -344,11 +344,11 @@ bot.on("callback_query:data", async ctx => {
             await sendMenu(ctx)
             break;
         case "send_ad":
+            await createAd(ctx)
+            await ctx.api.deleteMessage(ctx.callbackQuery.message.chat.id, ctx.callbackQuery.message.message_id)
             for (const key of Object.keys(ctx.session.ad)) {
                 ctx.session.ad[key] = null
             }
-            await ctx.api.deleteMessage(ctx.callbackQuery.message.chat.id, ctx.callbackQuery.message.message_id)
-            await createAd(ctx)
             ctx.session.step = "menu"
             await updateUserStep(ctx, ctx.session.step)
             await sendMenu(ctx)
