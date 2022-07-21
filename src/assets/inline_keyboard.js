@@ -20,7 +20,7 @@ const InlineKeyboards = {
         ]
         if (children) {
             menu.push([{
-                text: "Orqaga",
+                text: "Orqaga ↩️",
                 callback_data: `back?step=category`
             }])
         }
@@ -35,50 +35,50 @@ const InlineKeyboards = {
     },
 
     menu: (notifications_count = "na") => new InlineKeyboard()
-    .text("E'lonlar", "all_ads")
-    .row()
-    .webApp(`Bildirishnomalar ${notifications_count}`, `https://mosque-bot.vercel.app/notifications`)
-        .text("Sozlamalar", "settings"),
+        .text("🧾 E'lonlar", "all_ads")
+        .row()
+        .webApp(`💬 Bildirishnomalar: ${notifications_count}`, `https://mosque-bot.vercel.app/notifications`)
+        .text("⚙️ Sozlamalar", "settings"),
 
     menu_switch: (offset, step) => new InlineKeyboard()
         .text("◀️", `prev?offset=${Number(offset) - 1}`)
         .text("▶️", `next?offset=${Number(offset) + 1}`)
         .row()
-        .text("Orqaga", `back?step=${step}`),
+        .text("Orqaga ↩️", `back?step=${step}`),
 
     user_info_menu: (step) =>
         new InlineKeyboard()
-        .text("Ismni o'zgartirish", `change_user_info?step=name`)
-        .text("Raqamni o'zgartirish", `change_user_info?step=phone`)
+        .text("👤 Ismni o'zgartirish ✏️", `change_user_info?step=name`)
+        .text("☎️ Raqamni o'zgartirish ✏️", `change_user_info?step=phone`)
         .row()
-        .text("Orqaga", `back?step=${step}`),
+        .text("Orqaga ↩️", `back?step=${step}`),
 
     ad_result_menu:
         new InlineKeyboard()
-        .text("Bekor qilish", `cancel_ad`)
-        .text("O'zgartirish", `edit_ad`)
+        .text("✏️ O'zgartirish", `edit_ad`)
         .row()
-        .text("Jo'natish", `send_ad`),
+        .text("❌ Bekor qilish", `cancel_ad`)
+        .text("✅ Jo'natish", `send_ad`),
     ad_edit_menu: (step) =>
         new InlineKeyboard()
-        .text("Sarlavha", `ad:edit_name`)
-        .text("Miqdor", `ad:edit_amount`)
+        .text("✏️ Sarlavha", `ad:edit_name`)
+        .text("✏️ Miqdor", `ad:edit_amount`)
         .row()
-        .text("Izoh", `ad:edit_text`)
-        .text("Bo'lim", `ad:edit_category`)
+        .text("✏️ Izoh", `ad:edit_text`)
+        .text("✏️ Bo'lim", `ad:edit_category`)
         .row()
-        .text("Orqaga", `back?step=${step}`),
+        .text("Orqaga ↩️", `back?step=${step}`),
 
     ad_sections_menu: (step) =>
         new InlineKeyboard()
-        .webApp("Mening e'lonlarim", `https://mosque-bot.vercel.app/announcements`)
+        .webApp("🗒 Mening e'lonlarim", `https://mosque-bot.vercel.app/announcements`)
         // .webApp("E'lon berish", "https://mosque-bot.vercel.app/add-announcement")
-        .text("E'lon berish", "new_ad")
+        .text("📢 E'lon berish", "new_ad")
         .row()
-        .text("Orqaga", `back?step=${step}`),
+        .text("Orqaga ↩️", `back?step=${step}`),
 
-    yes_no: (step) => new InlineKeyboard().text("Yo'q", `no?step=${step}`).text("Ha", `yes?step=${step}`),
-    back: (value) => new InlineKeyboard().text("Orqaga", `back?step=${value}`),
+    yes_no: (step) => new InlineKeyboard().text("❌ Yo'q", `no?step=${step}`).text("✅ Ha", `yes?step=${step}`),
+    back: (value) => new InlineKeyboard().text("Orqaga ↩️", `back?step=${value}`),
 }
 
 module.exports = InlineKeyboards;

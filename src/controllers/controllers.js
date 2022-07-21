@@ -57,14 +57,6 @@ class Controllers {
                         }
                     )
                     break;
-                case "lang":
-                    await editMessage(
-                        ctx, ctx.callbackQuery.message.message_id,
-                        "text", messages.startMsg, {
-                            inline_keyboard: InlineKeyboards.select_language.inline_keyboard
-                        }
-                    )
-                    break;
 
                 default:
                     break;
@@ -158,13 +150,13 @@ class Controllers {
             let text = "Xatolik yuz berdi"
             switch (user?.message) {
                 case "Mosque not found!":
-                    text = "Ma'lumotlar xato!"
+                    text = "❗️ Ma'lumotlar xato!"
                     break;
                 case "Incorrect username or password!":
-                    text = "Ma'lumotlar mos kelmadi!"
+                    text = "❗️ Ma'lumotlar mos kelmadi!"
                     break
                 case "Not mosque admin!":
-                    text = "Siz bu masjidga admin emassiz!"
+                    text = "❗️ Siz bu masjidga admin emassiz!"
                     break
                 default:
                     break;
@@ -208,8 +200,8 @@ class Controllers {
         let user = await Controllers.getUser(ctx)
 
         await ctx.editMessageText(
-            `Profil:\n\n<i>Ismingiz:</i>  <b>${user.full_name}</b>
-            \n<i>Telefon raqamingiz:</i>  <b>${user.phone_number}</b>`, {
+            `<i>👤 Ismingiz:</i>  <b>${user.full_name}</b>
+            \n<i>☎️ Telefon raqamingiz:</i>  <b>${user.phone_number ? user.phone_number : "kiritilmagan"}</b>`, {
                 parse_mode: "HTML",
                 message_id: ctx.callbackQuery.message.message_id,
                 reply_markup: InlineKeyboards.user_info_menu("menu")
@@ -224,11 +216,7 @@ class Controllers {
         } = require("query-string").parseUrl(ctx.callbackQuery.data)
         switch (query.step) {
             case "menu":
-                await ctx.editMessageText(messages.menuMsg, {
-                    parse_mode: "HTML",
-                    message_id: ctx.callbackQuery.message.message_id,
-                    reply_markup: InlineKeyboards.menu
-                })
+                await Controllers.sendMenu(ctx, null, true)
                 break;
             case "ad:result":
                 await ctx.editMessageReplyMarkup({
@@ -238,11 +226,11 @@ class Controllers {
                 break;
         
             case "settings":
-                Controllers.openSettingsMenu(ctx)
+                await Controllers.openSettingsMenu(ctx)
                 break;
         
             case "category":
-                Controllers.sendCategories(ctx, 0, "edit")
+                await Controllers.sendCategories(ctx, 0, "edit")
                 ctx.session.step = "ad:category"
                 break;
         
@@ -256,7 +244,7 @@ class Controllers {
     // Ad
 
     static async askAdName(ctx) {
-        await ctx.editMessageText("E'lon sarlavhasini kiriting:\n (Sarlavhada batafsil ma'lumot va miqdor ko'rsatilishi shart emas)", {
+        await ctx.editMessageText("🔘 E'lon sarlavhasini kiriting:\n❕ Sarlavhada batafsil ma'lumot va miqdor ko'rsatilishi shart emas.", {
             parse_mode: "HTML",
             reply_markup: {
                 inline_keyboard: []
@@ -270,14 +258,14 @@ class Controllers {
     }
 
     static async askAdAmount(ctx) {
-        await ctx.reply("Kerakli miqdorni kiriting:", {
+        await ctx.reply("🔢 Kerakli miqdorni kiriting:", {
             parse_mode: "HTML"
         })
     }
 
     static async setAdAmount(ctx) {
         if (isNaN(ctx.msg.text)) {
-            let m = await ctx.reply("Iltimos, miqdor sifatida son jo'nating!")
+            let m = await ctx.reply("❗️ Iltimos, miqdor sifatida son jo'nating!")
             ctx.session.messages_to_delete.push(m.message_id)
             ctx.session.messages_to_delete.push(ctx.msg.message_id)
             return false
@@ -287,7 +275,7 @@ class Controllers {
     }
 
     static async askAdAmountType(ctx) {
-        await ctx.reply("Miqdor birligini tanlang yoki kiriting:", {
+        await ctx.reply("⚖️ Miqdor birligini tanlang yoki kiriting:", {
             parse_mode: "HTML",
             reply_markup: {
                 keyboard: Keyboards.amount_types.build(),
@@ -303,7 +291,7 @@ class Controllers {
     }
 
     static async askAdText(ctx) {
-        await ctx.reply("Qo'shimcha izoh qoldirasizmi?", {
+        await ctx.reply("❔ Qo'shimcha izoh qoldirasizmi?", {
             parse_mode: "HTML",
             reply_markup: InlineKeyboards.yes_no("ad:text")
         })
@@ -320,14 +308,14 @@ class Controllers {
                 const { query } = require("query-string").parseUrl(ctx.callbackQuery.data)
                 categories = await fetchUrl(`/categories/tg${page ? `?page=${page}` : ""}${children ? `${page ? "&" : "?"}parent_id=${query.category_id}` : ""}`)
                 console.log(`/categories/tg${page ? `?page=${page}` : ""}${children ? ` ${page ? "&" : "?"}parent_id=${query.category_id}` : ""}`);
-                await ctx.editMessageText(children ? "Asosiy bo'limni tanlang.\n Aynan shu bo'lim e'longa biriktiriladi." : "Kerakli bo'limni tanlang:", {
+                await ctx.editMessageText(children ? "🗒 Asosiy bo'limni tanlang.\n❕ Aynan shu bo'lim e'longa biriktiriladi." : "🗒 Kerakli bo'limni tanlang:", {
                     message_id: ctx.callbackQuery.message.message_id,
                     reply_markup: {
                         inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages, children)
                     }
                 })
             }else {
-                await ctx.reply(children ? "Asosiy bo'limni tanlang.\n Aynan shu bo'lim e'longa biriktiriladi." : "Kerakli bo'limni tanlang:", {
+                await ctx.reply(children ? "🗒 Asosiy bo'limni tanlang.\n❕ Aynan shu bo'lim e'longa biriktiriladi." : "🗒 Kerakli bo'limni tanlang:", {
                     parse_mode: "HTML",
                     reply_markup: {
                         inline_keyboard: InlineKeyboards.select_categories(categories.data.categories, categories.data.pagination.current, categories.data.pagination.pages, children)
@@ -343,7 +331,7 @@ class Controllers {
         try {
             const category = await fetchUrl(`/categories/${ctx.session.ad.category_id}`)
             const parent = await fetchUrl(`/categories/${category.data.category.parent_id}`)
-            let text = `Sarlavha: ${ctx.session.ad.name}\nMiqdor: ${ctx.session.ad.amount} ${ctx.session.ad.amount_type}\nIzoh: ${ctx.session.ad.text ? ctx.session.ad.text : ""}\nBo'lim: ${parent.data.category.name} ➡️ ${category.data.category.name}`
+            let text = `🔘 <b>Sarlavha</b>: ${ctx.session.ad.name}\n🔢 <b>Miqdor</b>: ${ctx.session.ad.amount} ${ctx.session.ad.amount_type}\n✍️ <b>Izoh</b>: ${ctx.session.ad.text ? ctx.session.ad.text : ""}\n🗒 <b>Bo'lim</b>: ${parent.data.category.name} ➡️ ${category.data.category.name}`
 
             action == "edit" ? 
             await ctx.editMessageText(text, {
@@ -366,12 +354,12 @@ class Controllers {
             const result = ctx.session.ad
             const ad = await fetchUrl(`/ads`, "POST", {...result, mosque_id: user.mosque_admin.mosque_id})
             ad.ok ? 
-            await ctx.reply("E'lon muvaffaqiyatli yaratildi.", {
+            await ctx.reply("✅ E'lon muvaffaqiyatli yaratildi.", {
                 reply_markup: {
                     remove_keyboard: true
                 }
             })
-            : await ctx.reply("Xatolik yuz berdi! Iltimos, qayta urining.", {
+            : await ctx.reply("❗️ Xatolik yuz berdi! Iltimos, qayta urining.", {
                 reply_markup: {
                     remove_keyboard: true
                 }

@@ -112,7 +112,7 @@ bot.on("message", async (ctx, next) => {
     const chat_id = ctx.msg.chat.id
 
     if (!ctx.session.login && ctx.session.step != "username" && ctx.session.step != "password") {
-        await ctx.reply("Sessiyangiz eskirgan. Login qilish uchun /start buyrug'ini jo'nating")
+        await ctx.reply("❗️ Sessiya eskirgan. Tizimga kirish uchun /start buyrug'ini jo'nating")
         return
     }
 
@@ -134,12 +134,12 @@ bot.command("menu", async (ctx) => {
     let user = await getUser(ctx)
 
     if(!user || !user.mosque_admin){
-        await ctx.reply("Siz ro'yxatdan o'tmagansiz! Ro'yhatdan o'tish uchun /start buyrug'ini jo'nating")
+        await ctx.reply("❗️ Siz ro'yxatdan o'tmagansiz. Ro'yhatdan o'tish uchun /start buyrug'ini jo'nating")
         return
     }
 
     if (!ctx.session.login) {
-        await ctx.reply("Sessiyangiz eskirgan. Login qilish uchun /start buyrug'ini jo'nating")
+        await ctx.reply("❗️ Sessiyangiz eskirgan. Tizimga kirish uchun /start buyrug'ini jo'nating")
         return
     }
 
@@ -151,7 +151,7 @@ bot.command("logout", async ctx => {
 })
 
 bot.hears("Bekor qilish", async (ctx) => {
-    await ctx.reply("E'lon berish bekor qilindi", {
+    await ctx.reply("❕ E'lon berish bekor qilindi", {
         parse_mode: "HTML",
         reply_markup: {
             remove_keyboard: true,
@@ -210,7 +210,7 @@ router.route(`edit_user_info:name`, async (ctx) => {
     let a = await setName(ctx)
     await ctx.reply(messages.nameChagedMsg(ctx.session.user.name),{
         parse_mode: "HTML",
-        reply_markup: InlineKeyboards.back("menu")
+        reply_markup: InlineKeyboards.back("settings")
     })
     ctx.session.step = "menu"
     await updateUserStep(ctx, ctx.session.step)
@@ -221,7 +221,7 @@ router.route(`edit_user_info:phone`, async (ctx) => {
     if (!a) return
     await ctx.reply(messages.phoneChagedMsg(ctx.session.user.phone), {
         parse_mode: "HTML",
-        reply_markup: InlineKeyboards.back("menu")
+        reply_markup: InlineKeyboards.back("settings")
     })
     ctx.session.step = "menu"
     await updateUserStep(ctx, ctx.session.step)
@@ -280,6 +280,13 @@ router.route(`ad:text`, async (ctx) => {
 // CALLBACK
 
 bot.on("callback_query:data", async ctx => {
+    if (!ctx.session.login) {
+        await ctx.answerCallbackQuery({
+            text: "❗️ Sessiya eskirgan. Tizimga kirish uchun /start buyrug'ini jo'nating",
+            show_alert: true
+        })
+        return
+    }
     const {
         url: command,
         query
@@ -287,7 +294,7 @@ bot.on("callback_query:data", async ctx => {
 
     switch (command) {
         case "all_ads":
-            await ctx.editMessageText("Kerakli bo'limni tanlang:", {
+            await ctx.editMessageText("🔘 Kerakli bo'limni tanlang:", {
                 message_id: ctx.callbackQuery.message.message_id,
                 parse_mode: "HTML",
                 reply_markup: InlineKeyboards.ad_sections_menu("menu")
@@ -333,7 +340,7 @@ bot.on("callback_query:data", async ctx => {
                 ctx.session.ad[key] = null
             }
             await ctx.api.deleteMessage(ctx.callbackQuery.message.chat.id, ctx.callbackQuery.message.message_id)
-            await ctx.reply("E'lon berish bekor qilindi.",{
+            await ctx.reply("❕ E'lon berish bekor qilindi.",{
                 parse_mode: "HTML",
                 reply_markup: {
                     remove_keyboard: true,
@@ -359,7 +366,7 @@ bot.on("callback_query:data", async ctx => {
             await updateUserStep(ctx, ctx.session.step)
             break
         case "ad:edit_text":
-            await ctx.editMessageText("Qo'shimcha izohni kiriting:",{
+            await ctx.editMessageText("✍️ Qo'shimcha izohni kiriting:",{
                 reply_markup: {
                     inline_keyboard: []
                 }
@@ -368,7 +375,7 @@ bot.on("callback_query:data", async ctx => {
             await updateUserStep(ctx, ctx.session.step)
             break
         case "ad:edit_amount":
-            await ctx.editMessageText("Kerakli miqdorni kiriting:",{
+            await ctx.editMessageText("🔢 Kerakli miqdorni kiriting:",{
                 reply_markup: {
                     inline_keyboard: []
                 }
@@ -387,7 +394,7 @@ bot.on("callback_query:data", async ctx => {
         case "yes":
             switch (query.step) {
                 case "ad:text":
-                    await ctx.editMessageText("Qo'shimcha izohni kiriting:", {
+                    await ctx.editMessageText("✍️ Qo'shimcha izohni kiriting:", {
                         message_id: ctx.callbackQuery.message.message_id,
                         reply_markup: {
                             inline_keyboard: []
